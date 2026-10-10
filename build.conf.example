@@ -1,0 +1,48 @@
+# Example per-project configuration for build_ffs.sh.
+#
+# Copy this file to build.conf in the driver repository root (next to the
+# build_ffs.sh wrapper) and edit the values for the project. All paths are
+# relative to the driver repository root. This file is sourced as bash.
+
+# ---- Required --------------------------------------------------------------
+
+# Package directory that contains the platform DSC.
+PKG_DIR="BC250DXEv3ExamplePkg"
+
+# Platform description file passed to `build -p`.
+PLATFORM_DSC="BC250DXEv3ExamplePkg/BC250DXEv3ExamplePkg.dsc"
+
+# Output subdirectory name under the edk2 Build/ tree where the built .efi is
+# looked up. This is the DSC [Defines] PLATFORM_NAME / the directory the edk2
+# build creates.
+BUILD_PACKAGE_DIR="MeiMeiDXEv3_Example"
+
+# Driver name. Also the base name of the generated .efi/.ffs and associated
+# section files.
+MODULE_NAME="MeiMeiDXEv3_Example"
+
+# Module INF. Required even when BUILD_MODULE=0, and used with `-m` when
+# BUILD_MODULE=1.
+MODULE_INF="BC250DXEv3ExamplePkg/BC250DXEv3ExampleDxe/BC250DXEv3ExampleDxe.inf"
+
+# File GUID passed to `GenFfs -g` when packing the .ffs.
+MODULE_GUID="00000000-0000-0000-0000-000000000000"
+
+# ---- Optional --------------------------------------------------------------
+
+# When 1, build only MODULE_INF (`build -m`) instead of the whole platform DSC.
+# Default: 0
+#BUILD_MODULE=1
+
+# When 1, use a full recursive edk2 submodule update. When 0 (default), only
+# the minimal submodule set needed for BaseTools/MdePkg is initialized, plus
+# SUBMODULES_EXTRA. Default: 0
+#SUBMODULES_RECURSIVE=1
+
+# Space-separated extra edk2 submodule paths to initialize in the non-recursive
+# case (for example a package's own brotli copy).
+#SUBMODULES_EXTRA="MdeModulePkg/Library/BrotliCustomDecompressLib/brotli"
+
+# Shell command run in the repository root (via eval) before the edk2 build, in
+# both container and host modes. Use it to generate sources or blobs.
+#PREBUILD_CMD="python3 BC250DXEv3ExamplePkg/prepare_blobs.py"

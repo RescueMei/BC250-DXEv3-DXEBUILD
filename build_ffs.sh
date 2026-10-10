@@ -248,17 +248,13 @@ build_with_container() {
 
   mkdir -p "$CACHE_DIR" "$EDK2_CACHE_DIR" "$OUTPUT_DIR"
 
-  # Run the pre-build hook on the host first, where host-only toolchains and
-  # the container engine are available (for example an Xtensa build that needs
-  # another container).  If it is unavailable or fails on the host, fall back to
-  # running it inside the edk2 container so in-container tools still work.
+  # Run the pre-build hook on the host only.  Host-only toolchains and the
+  # container engine live here, so a hook that needs another container (for
+  # example an Xtensa build) can run it; hooks that need edk2-container tools
+  # should invoke that container themselves.
   if [[ -n "$PREBUILD_CMD" ]]; then
     echo "Running pre-build hook (host): $PREBUILD_CMD"
-    if (cd "$REPO_DIR" && eval "$PREBUILD_CMD"); then
-      PREBUILD_CMD=""
-    else
-      echo "warning: host pre-build hook failed; retrying inside the container" >&2
-    fi
+    (cd "$REPO_DIR" && eval "$PREBUILD_CMD")
   fi
 
   "$CONTAINER_ENGINE" run --rm \
@@ -281,7 +277,6 @@ build_with_container() {
     -e SUBMODULES_RECURSIVE="$SUBMODULES_RECURSIVE" \
     -e SUBMODULES_EXTRA="$SUBMODULES_EXTRA" \
     -e BUILD_MODULE="$BUILD_MODULE" \
-    -e PREBUILD_CMD="$PREBUILD_CMD" \
     "$EDK2_IMAGE" \
     bash -lc '
       set -euo pipefail
@@ -404,11 +399,6 @@ build_with_container() {
         echo "error: edksetup.sh completed but build is not on PATH" >&2
         echo "PATH=$PATH" >&2
         exit 1
-      fi
-
-      if [[ -n "$PREBUILD_CMD" ]]; then
-        echo "Running pre-build hook: $PREBUILD_CMD"
-        (cd "$CONTAINER_WORKSPACE" && eval "$PREBUILD_CMD")
       fi
 
       echo "Running EDK II build..."

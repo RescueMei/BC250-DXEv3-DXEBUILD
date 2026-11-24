@@ -74,6 +74,18 @@ SUBMODULES_RECURSIVE="${SUBMODULES_RECURSIVE:-0}"
 SUBMODULES_EXTRA="${SUBMODULES_EXTRA:-}"
 BUILD_MODULE="${BUILD_MODULE:-0}"
 PREBUILD_CMD="${PREBUILD_CMD:-}"
+PACKAGES_PATH_EXTRA="${PACKAGES_PATH_EXTRA:-}"
+PROTOCOL_CHECK_CMD="${PROTOCOL_CHECK_CMD:-}"
+
+if [[ -n "$PACKAGES_PATH_EXTRA" && ! -d "$REPO_DIR/$PACKAGES_PATH_EXTRA" ]]; then
+  echo "error: PACKAGES_PATH_EXTRA does not exist: $REPO_DIR/$PACKAGES_PATH_EXTRA" >&2
+  exit 1
+fi
+
+if [[ -n "$PROTOCOL_CHECK_CMD" ]]; then
+  echo "Running protocol check: $PROTOCOL_CHECK_CMD"
+  (cd "$REPO_DIR" && eval "$PROTOCOL_CHECK_CMD")
+fi
 
 find_basetool() {
   # Locate a built EDK II utility in either its wrapper or native binary path.
@@ -203,7 +215,7 @@ build_with_host_edk2() {
 
   cd "$EDK2_DIR"
   export WORKSPACE="$EDK2_DIR"
-  export PACKAGES_PATH="$REPO_DIR:$EDK2_DIR${PACKAGES_PATH:+:$PACKAGES_PATH}"
+  export PACKAGES_PATH="$REPO_DIR${PACKAGES_PATH_EXTRA:+:$REPO_DIR/$PACKAGES_PATH_EXTRA}:$EDK2_DIR${PACKAGES_PATH:+:$PACKAGES_PATH}"
   export PYTHON_COMMAND="${PYTHON_COMMAND:-python3}"
   export EDK_TOOLS_PATH="$EDK2_DIR/BaseTools"
 
@@ -277,6 +289,7 @@ build_with_container() {
     -e SUBMODULES_RECURSIVE="$SUBMODULES_RECURSIVE" \
     -e SUBMODULES_EXTRA="$SUBMODULES_EXTRA" \
     -e BUILD_MODULE="$BUILD_MODULE" \
+    -e PACKAGES_PATH_EXTRA="$PACKAGES_PATH_EXTRA" \
     "$EDK2_IMAGE" \
     bash -lc '
       set -euo pipefail
@@ -350,7 +363,7 @@ build_with_container() {
       make -C BaseTools/Source/C -j"$(nproc)"
 
       export WORKSPACE="$CONTAINER_EDK2_DIR"
-      export PACKAGES_PATH="$CONTAINER_WORKSPACE:$CONTAINER_EDK2_DIR"
+      export PACKAGES_PATH="$CONTAINER_WORKSPACE${PACKAGES_PATH_EXTRA:+:$CONTAINER_WORKSPACE/$PACKAGES_PATH_EXTRA}:$CONTAINER_EDK2_DIR"
       export PYTHON_COMMAND="${PYTHON_COMMAND:-python3}"
       export EDK_TOOLS_PATH="$CONTAINER_EDK2_DIR/BaseTools"
 
